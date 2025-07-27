@@ -492,6 +492,9 @@ local function handle_chat(player, message)
 				else
 					status_text = "No fake 🟢"
 					if face_phrases[message] == 1 then
+						if last_action == "호스트 주시." then
+							handle_behavior(false)
+						end
 						rotate_facing("front")
 					else
 						rotate_facing("back")

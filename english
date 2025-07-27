@@ -492,19 +492,9 @@ local function handle_chat(player, message)
 			return
 		end
 		if message == "About face." then
-			if ambiguous_count >= 2 then
-				status_text = "No fake 🟢"
-				angle = angle + 180
-				rotate_angle(180)
-			else
-				if last_direction and string.match(direction_phrases[last_direction], "([^:]+)") == "ambiguous" then
-					status_text = "Fake 🔴"
-				else
-					status_text = "No fake 🟢"
-					angle = angle + 180
-					rotate_angle(180)
-				end
-			end
+			status_text = "No fake 🟢"
+			angle = angle + 180
+			rotate_angle(180)
 			humanoid.AutoRotate = true
 			return
 		end

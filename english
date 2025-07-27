@@ -471,6 +471,9 @@ local function handle_chat(player, message)
 			if ambiguous_count >= 2 then
 				status_text = "No fake 🟢"
 				if face_phrases[message] == 1 then
+					if last_action == "Control face." then
+						handle_behavior(false)
+					end
 					rotate_facing("front")
 				else
 					rotate_facing("back")

@@ -308,7 +308,7 @@ do
 		Callback = function()
 			getgenv().eris_running = false
 			Fluent:Destroy()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean"))()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean", true))()
 		end
 	})
 

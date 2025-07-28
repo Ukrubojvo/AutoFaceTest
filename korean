@@ -1,4 +1,4 @@
-getgenv().eris_version = "1.0.5";
+getgenv().eris_version = "1.0.6";
 if getgenv().eris_running then return end
 getgenv().eris_running = true;
 local Fluent = loadstring(game:HttpGetAsync("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
@@ -555,6 +555,10 @@ local function handle_chat(player, message)
 		return
 	end
 	if is_testing then
+		if string.find(message, "#") then
+			status_text = "Fake 🔴"
+			return
+		end
 		if fakeChk_true and status_text == "Fake 🔴" and last_fake then
 			return
 		end

@@ -412,7 +412,7 @@ do
         detect_delay = Value
     end)
 
-	Detect:SetValue(0.2)
+	Detect:SetValue(0.5)
 
 	local Speed = Tabs.Settings:AddSlider("Speed", {
         Title = "Rotation Speed",

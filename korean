@@ -1,3 +1,6 @@
+getgenv().eris_version = "1.0.5";
+if getgenv().eris_running then return end
+getgenv().eris_running = true;
 local Fluent = loadstring(game:HttpGetAsync("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -70,6 +73,9 @@ local rotate_speed = 0.2
 local spin_speed = 5
 local rotation_queue = {}
 local is_rotating = false
+
+local update_check = true
+local now_version = tostring(getgenv().version)
 
 local spin_connection = nil
 local look_connection = nil
@@ -254,6 +260,17 @@ local function rotate_angle(angle_degrees)
 end
 
 do
+	task.spawn(function()
+		while update_check do
+			task.wait(5)
+			local ver = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean"))()
+			if getgenv().eris_version ~= now_version then
+				update_check = false
+				warn("New version Detected!")
+			end
+		end
+	end)
+
 	local Stats = Tabs.Main:AddParagraph({
         Title = "-------------------",
         Content = "Target: None\nStatus: Inactive\nAngle: 0"
@@ -482,7 +499,7 @@ local function handle_chat(player, message)
 		status_text = "Start Detected!"
 		return
 	end
-	if message == "페이스 테스트 종료." then
+	if message == "페이스 테스트 종료." or message == "페이스 테스트 끝." then
 		if last_action ~= "앞을 봐." or math.abs(angle) > 10 then
 			status_text = "Fake 🔴"
 			return

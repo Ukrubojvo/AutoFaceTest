@@ -1,6 +1,6 @@
-getgenv().eris_version = "1.0.5";
-if getgenv().eris_running then return end
-getgenv().eris_running = true;
+eris_version = "1.0.5";
+if eris_running then return end
+eris_running = true;
 local Fluent = loadstring(game:HttpGetAsync("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -75,7 +75,7 @@ local rotation_queue = {}
 local is_rotating = false
 
 local update_check = true
-local now_version = tostring(getgenv().version)
+local now_version = tostring(eris_version)
 
 local spin_connection = nil
 local look_connection = nil
@@ -264,14 +264,14 @@ do
 		while update_check do
 			task.wait(5)
 			local ver = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean"))()
-			if getgenv().eris_version ~= now_version then
+			if eris_version ~= now_version then
 				update_check = false
 				warn("New version Detected!")
 				local update = Tabs.Main:AddButton({
 					Title = "Update now!",
 					Description = "최신 버전으로 바로 업데이트 해요!\n변경사항 초기화 됨",
 					Callback = function()
-						getgenv().eris_running = false
+						eris_running = false
 						Fluent:Destroy()
 						loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean"))()
 					end
@@ -651,7 +651,7 @@ do
 			end
 			warn = oldwarn
 			print = oldprint
-			getgenv().eris_running = false
+			eris_running = false
 			abc:Disconnect()
 			return
 		end

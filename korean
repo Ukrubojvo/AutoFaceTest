@@ -1,5 +1,3 @@
--- 아직 에러가 많아서 Manual 사용도 권장 드려요!
-
 local Fluent = loadstring(game:HttpGetAsync("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -290,6 +288,20 @@ do
 		Description = "동기화 여부를 결정할 수 있어요.",
 		Default = false 
 	})
+
+	local ForceFaceStart = Tabs.Main:AddButton({
+        Title = "Force Face Start",
+		Description = "페이스 테스트 시작을 강제로 적용해요.\ne.g. 페이스 테스트 시작이 감지 인됨",
+        Callback = function()
+			is_testing = true
+			last_direction = nil
+			last_action = nil
+			angle = 0
+			ambiguous_count = 0
+			status_text = "Start Detected!"
+            print("강제로 시작 여부가 활성화 됨")
+        end
+    })
 
     Toggle:OnChanged(function()
         if Options.Ready.Value then

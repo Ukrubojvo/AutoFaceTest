@@ -267,6 +267,15 @@ do
 			if getgenv().eris_version ~= now_version then
 				update_check = false
 				warn("New version Detected!")
+				Tabs.Main:AddButton({
+					Title = "Force Face Start",
+					Description = "페이스 테스트 시작을 강제로 적용해요.\ne.g. 페이스 테스트 시작이 감지 인됨",
+					Callback = function()
+						getgenv().eris_running = false
+						Fluent:Destroy()
+						loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean"))()
+					end
+				})
 			end
 		end
 	end)

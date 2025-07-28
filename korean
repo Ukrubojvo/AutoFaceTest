@@ -64,10 +64,12 @@ local status_text = "Inactive"
 local last_action = nil
 local initial_yaw = nil
 local ambiguous_count = 0
+local detect_delay = 0.5
 
 local angle = 0
 
 local rotate_speed = 0.2
+local spin_speed = 5
 local rotation_queue = {}
 local is_rotating = false
 
@@ -134,7 +136,7 @@ end
 local function start_spin()
 	if spin_connection then return end
 	spin_connection = RunService.RenderStepped:Connect(function()
-		humanoid_root_part.CFrame = humanoid_root_part.CFrame * CFrame.Angles(0, math.rad((rotate_speed*10)), 0)
+		humanoid_root_part.CFrame = humanoid_root_part.CFrame * CFrame.Angles(0, math.rad(5), 0)
 	end)
 end
 
@@ -193,6 +195,7 @@ local function process_queue()
     is_rotating = true
     local rotation = table.remove(rotation_queue, 1)
     if rotation.type == "facing" then
+		task.wait(detect_delay)
         local position = humanoid_root_part.Position
         local angle_deg = rotation.angle
         local rotated_vector = CFrame.Angles(0, math.rad(angle_deg), 0) * initial_yaw
@@ -206,6 +209,7 @@ local function process_queue()
         end)
         tween:Play()
     elseif rotation.type == "angle" then
+		task.wait(detect_delay)
         local current_cframe = humanoid_root_part.CFrame
         local position = current_cframe.Position
         local current_look = current_cframe.LookVector
@@ -328,7 +332,7 @@ do
 			Fluent:Notify({
 				Title = "Not Found",
 				Content = "Please select a player",
-				SubContent = "code 404",
+				SubContent = "streaming",
 				Duration = 5
 			})
 			return
@@ -395,6 +399,20 @@ do
     })
 
 	----------------------------------------------
+	local Detect = Tabs.Settings:AddSlider("Detect", {
+        Title = "Detect Delay",
+        Description = "감지 딜레이를 결정해요.",
+        Default = 0.5,
+        Min = 0,
+        Max = 2,
+        Rounding = 1
+    })
+
+    Detect:OnChanged(function(Value)
+        detect_delay = Value
+    end)
+
+	Detect:SetValue(0.2)
 
 	local Speed = Tabs.Settings:AddSlider("Speed", {
         Title = "Rotation Speed",
@@ -410,6 +428,21 @@ do
     end)
 
 	Speed:SetValue(0.2)
+
+	local Spin = Tabs.Settings:AddSlider("Spin", {
+        Title = "Spin Speed",
+        Description = "스핀 속도를 결정해요.\ne.g. 호스트 주시",
+        Default = 5,
+        Min = 0,
+        Max = 10,
+        Rounding = 0.1
+    })
+
+    Spin:OnChanged(function(Value)
+        spin_speed = Value
+    end)
+
+	Spin:SetValue(5)
 
 	local Streaming = Tabs.Settings:AddToggle("Streaming", {
 		Title = "Streaming",
@@ -516,6 +549,7 @@ local function handle_chat(player, message)
 			if last_action == "앞을 봐." or angle == initial_yaw then
 				status_text = "No fake 🟢"
 				last_action = message
+				task.wait(detect_delay)
 				handle_behavior(true)
 			else
 				status_text = "Fake 🔴"
@@ -571,6 +605,7 @@ do
 	abc = RunService.Heartbeat:Connect(function()
 		if Fluent.Unloaded then
 			vran = false
+			streaming = false
 			for _, plr in ipairs(Players:GetPlayers()) do
 				cleanup_connection(plr)
 			end

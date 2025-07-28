@@ -73,6 +73,7 @@ local rotate_speed = 0.2
 local spin_speed = 5
 local rotation_queue = {}
 local is_rotating = false
+local pause = false
 
 local update_check = true
 local now_version = tostring(getgenv().eris_version)
@@ -295,20 +296,11 @@ do
 		Default = false 
 	})
 
-	local ForceFaceStart = Tabs.Main:AddButton({
-        Title = "Force Face Start",
-		Description = "페이스 테스트 시작을 강제로 적용해요.\ne.g. 페이스 테스트 시작이 감지 인됨",
-        Callback = function()
-			if is_active ~= true then return end
-			is_testing = true
-			last_direction = nil
-			last_action = nil
-			angle = 0
-			ambiguous_count = 0
-			status_text = "Start Detected!"
-            print("강제로 시작 여부가 활성화 됨")
-        end
-    })
+	local Pause = Tabs.Main:AddToggle("Pause", {
+		Title = "Pause & Resume", 
+		Description = "일시 정지.",
+		Default = false 
+	})
 
 	local update = Tabs.Main:AddButton({
 		Title = "Update now!",
@@ -340,6 +332,10 @@ do
 		end
     end)
 
+	Pause:OnChanged(function()
+		pause = Options.Pause.Value
+	end)
+
 	----------------------------------------------
 
 	local ResetYaw = Tabs.Manual:AddButton({
@@ -348,6 +344,21 @@ do
         Callback = function()
             set_facing_reference()
 			print("Yaw initialisation complete")
+        end
+    })
+
+	local ForceFaceStart = Tabs.Manual:AddButton({
+        Title = "강제 페이스 테스트 시작",
+		Description = "페이스 테스트 시작을 강제로 적용해요.\ne.g. 페이스 테스트 시작이 감지 인됨",
+        Callback = function()
+			if is_active ~= true then return end
+			is_testing = true
+			last_direction = nil
+			last_action = nil
+			angle = 0
+			ambiguous_count = 0
+			status_text = "Start Detected!"
+            print("강제로 시작 여부가 활성화 됨")
         end
     })
 
@@ -489,6 +500,7 @@ Window:SelectTab(1)
 local function handle_chat(player, message)
 	if not is_active then return end
 	if player.Name ~= player_name then return end
+	if pause then return end
 	if message == "페이스 테스트 시작." then
 		is_testing = true
 		last_direction = nil

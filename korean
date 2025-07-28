@@ -293,6 +293,7 @@ do
         Title = "Force Face Start",
 		Description = "페이스 테스트 시작을 강제로 적용해요.\ne.g. 페이스 테스트 시작이 감지 인됨",
         Callback = function()
+			if is_active ~= true then return end
 			is_testing = true
 			last_direction = nil
 			last_action = nil

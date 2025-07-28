@@ -484,8 +484,8 @@ local function handle_chat(player, message)
 	if is_testing then
 		humanoid.AutoRotate = false
 		if direction_phrases[message] then
-			last_direction = message
 			if string.match(direction_phrases[message], "([^:]+)") == "ambiguous" then
+				last_direction = message
 				if ambiguous_count >= 2 then ambiguous_count = 0 end
 				ambiguous_count = ambiguous_count + 1
 				if tonumber(string.match(direction_phrases[message], ":(%d+)")) == 1 then
@@ -597,7 +597,7 @@ task.spawn(function ()
 			angle = get_character_yaw()
 		end
 		if angle >= 360 then
-			angle = 0
+			angle = angle - 360
 		end
 	end
 end)

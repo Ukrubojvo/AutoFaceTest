@@ -614,7 +614,6 @@ local function handle_chat(player, message)
 			else
 				if last_direction and string.match(direction_phrases[last_direction], "([^:]+)") == "ambiguous" then
 					status_text = "Fake 🔴"
-					last_fake = true
 				else
 					status_text = "No fake 🟢"
 					if face_phrases[message] == 1 then
@@ -646,13 +645,11 @@ local function handle_chat(player, message)
 				handle_behavior(true)
 			else
 				status_text = "Fake 🔴"
-				last_fake = true
 			end
 			humanoid.AutoRotate = true
 			return
 		end
 		status_text = "Fake 🔴"
-		last_fake = true
 		humanoid.AutoRotate = true
 		return
 	end

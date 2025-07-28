@@ -14,7 +14,7 @@ local Window = Fluent:CreateWindow({
     Title = "한글 제식 오토",
     SubTitle = "by eris",
     TabWidth = 160,
-    Size = UDim2.fromOffset(520, 360),
+    Size = UDim2.fromOffset(520, 460),
     Acrylic = false,
     Theme = "Darker",
     MinimizeKey = Enum.KeyCode.RightShift
@@ -66,6 +66,9 @@ local last_action = nil
 local initial_yaw = nil
 local ambiguous_count = 0
 local detect_delay = 0.5
+local daegak_true = true
+local fakeChk_true = false
+local last_fake = true
 
 local angle = 0
 
@@ -92,6 +95,11 @@ local direction_phrases = {
 local face_phrases = {
 	["앞을 봐."] = 1,
 	["뒤를 봐."] = 2,
+}
+
+local fake_phrases = {
+	["페잌."] = 1,
+	["페이크."] = 2,
 }
 
 local function set_facing_reference()
@@ -296,6 +304,18 @@ do
 		Default = false 
 	})
 
+	local Daegak = Tabs.Main:AddToggle("Daegak", {
+		Title = "Incline F&B", 
+		Description = "대각선을 볼 때 앞, 뒤를 봐 허용 여부를 결정할 수 있어요.",
+		Default = true 
+	})
+
+	local FakeChk = Tabs.Main:AddToggle("FakeChk", {
+		Title = "Fake Check", 
+		Description = "페이크 체크 여부를 결정할 수 있어요.\ne.g. '좌향 후'를 입력하고 페잌. 을 안외쳤을 때 페이크로 간주",
+		Default = false 
+	})
+
 	local Pause = Tabs.Main:AddToggle("Pause", {
 		Title = "Pause & Resume", 
 		Description = "일시 정지.",
@@ -332,9 +352,20 @@ do
 		end
     end)
 
+	Daegak:OnChanged(function()
+		daegak_true = Options.Daegak.Value
+	end)
+
+	FakeChk:OnChanged(function()
+		fakeChk_true = Options.FakeChk.Value
+	end)
+
 	Pause:OnChanged(function()
 		pause = Options.Pause.Value
 	end)
+
+	Daegak:SetValue(true)
+	FakeChk:SetValue(false)
 
 	----------------------------------------------
 
@@ -501,6 +532,7 @@ local function handle_chat(player, message)
 	if not is_active then return end
 	if player.Name ~= player_name then return end
 	if pause then return end
+	
 	if message == "페이스 테스트 시작." then
 		is_testing = true
 		last_direction = nil
@@ -523,7 +555,17 @@ local function handle_chat(player, message)
 		return
 	end
 	if is_testing then
+		if fakeChk_true and status_text == "Fake 🔴" and last_fake then
+			return
+		end
+		last_fake = nil
 		humanoid.AutoRotate = false
+		if fake_phrases[message] then
+			last_fake = true
+			status_text = "No Fake Ready..."
+			humanoid.AutoRotate = true
+			return
+		end
 		if direction_phrases[message] then
 			if string.match(direction_phrases[message], "([^:]+)") == "ambiguous" then
 				last_direction = message
@@ -551,7 +593,7 @@ local function handle_chat(player, message)
 			return 
 		end
 		if face_phrases[message] then
-			if ambiguous_count >= 2 then
+			if ambiguous_count >= 2 or daegak_true then
 				status_text = "No fake 🟢"
 				if face_phrases[message] == 1 then
 					if last_action == "호스트 주시." then

@@ -260,26 +260,6 @@ local function rotate_angle(angle_degrees)
 end
 
 do
-	task.spawn(function()
-		while update_check do
-			task.wait(5)
-			local ver = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean"))()
-			if getgenv().eris_version ~= now_version then
-				update_check = false
-				warn("New version Detected!")
-				local update = Tabs.Main:AddButton({
-					Title = "Update now!",
-					Description = "최신 버전으로 바로 업데이트 해요!\n변경사항 초기화 됨",
-					Callback = function()
-						getgenv().eris_running = false
-						Fluent:Destroy()
-						loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean"))()
-					end
-				})
-			end
-		end
-	end)
-
 	local Stats = Tabs.Main:AddParagraph({
         Title = "-------------------",
         Content = "Target: None\nStatus: Inactive\nAngle: 0"
@@ -329,6 +309,16 @@ do
             print("강제로 시작 여부가 활성화 됨")
         end
     })
+
+	local update = Tabs.Main:AddButton({
+		Title = "Update now!",
+		Description = "최신 버전으로 바로 업데이트 해요!\n변경사항 초기화 됨",
+		Callback = function()
+			getgenv().eris_running = false
+			Fluent:Destroy()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/korean"))()
+		end
+	})
 
     Toggle:OnChanged(function()
         if Options.Ready.Value then

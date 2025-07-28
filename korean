@@ -642,6 +642,7 @@ do
 			end
 			warn = oldwarn
 			print = oldprint
+			getgenv().eris_running = false
 			abc:Disconnect()
 			return
 		end

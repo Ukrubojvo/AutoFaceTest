@@ -100,10 +100,12 @@ local face_phrases = {
 local fake_phrases = {
 	["페잌."] = 1,
 	["페이크."] = 2,
+	["Fake."] = 3,
 }
 
 local function set_facing_reference()
 	if not humanoid_root_part then return end
+	angle = 0
 	local look = humanoid_root_part.CFrame.LookVector
 	initial_yaw = Vector3.new(look.X, 0, look.Z).Unit
 end
@@ -166,12 +168,13 @@ local function handle_behavior(toggle)
         look_connection = nil
     end
     stop_spin()
-
+	humanoid.AutoRotate = true
     if not toggle then return end
     if not target_player or not target_player.Character then
         return
     end
 
+	humanoid.AutoRotate = false
     local target_hrp = target_player.Character:WaitForChild("HumanoidRootPart")
     look_connection = RunService.RenderStepped:Connect(function()
         if not humanoid_root_part or not humanoid_root_part.Parent then
@@ -543,8 +546,9 @@ local function handle_chat(player, message)
 		return
 	end
 	if message == "페이스 테스트 종료." or message == "페이스 테스트 끝." then
-		if last_action ~= "앞을 봐." or math.abs(angle) > 10 then
+		if last_action ~= "앞을 봐." or math.abs(((angle + 180) % 360 - 180)) > 10 then
 			status_text = "Fake 🔴"
+			last_fake = true
 			return
 		end
 		is_active = false
@@ -556,16 +560,16 @@ local function handle_chat(player, message)
 	end
 	if is_testing then
 		if string.find(message, "#") then
+			last_fake = true
 			status_text = "Fake 🔴"
 			return
 		end
 		if fakeChk_true and status_text == "Fake 🔴" and last_fake then
 			return
 		end
-		last_fake = nil
 		humanoid.AutoRotate = false
 		if fake_phrases[message] then
-			last_fake = true
+			last_fake = false
 			status_text = "No Fake Ready..."
 			humanoid.AutoRotate = true
 			return
@@ -610,6 +614,7 @@ local function handle_chat(player, message)
 			else
 				if last_direction and string.match(direction_phrases[last_direction], "([^:]+)") == "ambiguous" then
 					status_text = "Fake 🔴"
+					last_fake = true
 				else
 					status_text = "No fake 🟢"
 					if face_phrases[message] == 1 then
@@ -641,11 +646,13 @@ local function handle_chat(player, message)
 				handle_behavior(true)
 			else
 				status_text = "Fake 🔴"
+				last_fake = true
 			end
 			humanoid.AutoRotate = true
 			return
 		end
 		status_text = "Fake 🔴"
+		last_fake = true
 		humanoid.AutoRotate = true
 		return
 	end

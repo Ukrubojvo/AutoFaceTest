@@ -496,6 +496,7 @@ local function handle_chat(player, message)
 					rotate_angle(-45)
 				end
 			else
+				last_action = message
 				if tonumber(string.match(direction_phrases[message], ":(%d+)")) == 1 then
 					angle = angle + 90
 					rotate_angle(90)

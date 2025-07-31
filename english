@@ -1,5 +1,6 @@
--- 아직 에러가 많아서 Manual 사용도 권장 드려요!
-
+getgenv().eris_version = "1.0.3";
+if getgenv().eris_running then return end
+getgenv().eris_running = true;
 local Fluent = loadstring(game:HttpGetAsync("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -13,7 +14,7 @@ local Window = Fluent:CreateWindow({
     Title = "영어 제식 오토",
     SubTitle = "by eris",
     TabWidth = 160,
-    Size = UDim2.fromOffset(520, 330),
+    Size = UDim2.fromOffset(520, 460),
     Acrylic = false,
     Theme = "Darker",
     MinimizeKey = Enum.KeyCode.RightShift
@@ -64,12 +65,21 @@ local status_text = "Inactive"
 local last_action = nil
 local initial_yaw = nil
 local ambiguous_count = 0
+local detect_delay = 0.5
+local daegak_true = true
+local fakeChk_true = false
+local last_fake = true
 
 local angle = 0
 
 local rotate_speed = 0.2
+local spin_speed = 5
 local rotation_queue = {}
 local is_rotating = false
+local pause = false
+
+local update_check = true
+local now_version = tostring(getgenv().eris_version)
 
 local spin_connection = nil
 local look_connection = nil
@@ -86,8 +96,13 @@ local face_phrases = {
 	["Center face."] = 1,
 }
 
+local fake_phrases = {
+	["Fake."] = 1,
+}
+
 local function set_facing_reference()
 	if not humanoid_root_part then return end
+	angle = 0
 	local look = humanoid_root_part.CFrame.LookVector
 	initial_yaw = Vector3.new(look.X, 0, look.Z).Unit
 end
@@ -133,7 +148,7 @@ end
 local function start_spin()
 	if spin_connection then return end
 	spin_connection = RunService.RenderStepped:Connect(function()
-		humanoid_root_part.CFrame = humanoid_root_part.CFrame * CFrame.Angles(0, math.rad((rotate_speed*10)), 0)
+		humanoid_root_part.CFrame = humanoid_root_part.CFrame * CFrame.Angles(0, math.rad(5), 0)
 	end)
 end
 
@@ -150,12 +165,13 @@ local function handle_behavior(toggle)
         look_connection = nil
     end
     stop_spin()
-
+	humanoid.AutoRotate = true
     if not toggle then return end
     if not target_player or not target_player.Character then
         return
     end
 
+	humanoid.AutoRotate = false
     local target_hrp = target_player.Character:WaitForChild("HumanoidRootPart")
     look_connection = RunService.RenderStepped:Connect(function()
         if not humanoid_root_part or not humanoid_root_part.Parent then
@@ -192,6 +208,7 @@ local function process_queue()
     is_rotating = true
     local rotation = table.remove(rotation_queue, 1)
     if rotation.type == "facing" then
+		task.wait(detect_delay)
         local position = humanoid_root_part.Position
         local angle_deg = rotation.angle
         local rotated_vector = CFrame.Angles(0, math.rad(angle_deg), 0) * initial_yaw
@@ -205,6 +222,7 @@ local function process_queue()
         end)
         tween:Play()
     elseif rotation.type == "angle" then
+		task.wait(detect_delay)
         local current_cframe = humanoid_root_part.CFrame
         local position = current_cframe.Position
         local current_look = current_cframe.LookVector
@@ -286,6 +304,34 @@ do
 		Default = false 
 	})
 
+	local Daegak = Tabs.Main:AddToggle("Daegak", {
+		Title = "Incline F&B", 
+		Description = "대각선을 볼 때 앞, 뒤를 봐 허용 여부를 결정할 수 있어요.",
+		Default = true 
+	})
+
+	local FakeChk = Tabs.Main:AddToggle("FakeChk", {
+		Title = "Fake Check", 
+		Description = "페이크 체크 여부를 결정할 수 있어요.\ne.g. 'Left inline.'를 입력하고 Fake. 을 안외쳤을 때 페이크로 간주",
+		Default = false 
+	})
+
+	local Pause = Tabs.Main:AddToggle("Pause", {
+		Title = "Pause & Resume", 
+		Description = "일시 정지.",
+		Default = false 
+	})
+
+	local update = Tabs.Main:AddButton({
+		Title = "Update now!",
+		Description = "최신 버전으로 바로 업데이트 해요!\n변경사항 초기화 됨",
+		Callback = function()
+			getgenv().eris_running = false
+			Fluent:Destroy()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/Ukrubojvo/AutoFaceTest/master/english", true))()
+		end
+	})
+
     Toggle:OnChanged(function()
         if Options.Ready.Value then
 			local plr = Players:FindFirstChild(target_player)
@@ -306,6 +352,21 @@ do
 		end
     end)
 
+	Daegak:OnChanged(function()
+		daegak_true = Options.Daegak.Value
+	end)
+
+	FakeChk:OnChanged(function()
+		fakeChk_true = Options.FakeChk.Value
+	end)
+
+	Pause:OnChanged(function()
+		pause = Options.Pause.Value
+	end)
+
+	Daegak:SetValue(true)
+	FakeChk:SetValue(false)
+
 	----------------------------------------------
 
 	local ResetYaw = Tabs.Manual:AddButton({
@@ -317,8 +378,23 @@ do
         end
     })
 
+	local ForceFaceStart = Tabs.Manual:AddButton({
+        Title = "강제 페이스 테스트 시작",
+		Description = "페이스 테스트 시작을 강제로 적용해요.\ne.g. 페이스 테스트 시작이 감지 인됨",
+        Callback = function()
+			if is_active ~= true then return end
+			is_testing = true
+			last_direction = nil
+			last_action = nil
+			angle = 0
+			ambiguous_count = 0
+			status_text = "Start Detected!"
+            print("강제로 시작 여부가 활성화 됨")
+        end
+    })
+
 	local ControlFace = Tabs.Manual:AddToggle("ControlFace", {
-		Title = "Control face",
+		Title = "호스트 주시",
 		Default = false 
 	})
 
@@ -327,7 +403,7 @@ do
 			Fluent:Notify({
 				Title = "Not Found",
 				Content = "Please select a player",
-				SubContent = "code 404",
+				SubContent = "streaming",
 				Duration = 5
 			})
 			return
@@ -345,48 +421,69 @@ do
 	end)
 
 	local LeftFace = Tabs.Manual:AddButton({
-        Title = "Left face",
+        Title = "좌향 좌",
         Callback = function()
             rotate_angle(90)
         end
     })
 
 	local RightFace = Tabs.Manual:AddButton({
-        Title = "Right face",
+        Title = "우향 우",
         Callback = function()
             rotate_angle(-90)
         end
     })
 
 	local LeftIncline = Tabs.Manual:AddButton({
-        Title = "Left incline",
+        Title = "좌향 우",
         Callback = function()
             rotate_angle(45)
         end
     })
 
 	local RightIncline = Tabs.Manual:AddButton({
-        Title = "Right incline",
+        Title = "우향 좌",
         Callback = function()
             rotate_angle(-45)
         end
     })
 
 	local CenterFace = Tabs.Manual:AddButton({
-        Title = "Center face",
+        Title = "앞을 봐",
         Callback = function()
             rotate_facing("front")
         end
     })
 
+	local AboutFace = Tabs.Manual:AddButton({
+        Title = "뒤를 봐",
+        Callback = function()
+            rotate_facing("back")
+        end
+    })
+
 	local SpinFace = Tabs.Manual:AddButton({
-        Title = "About face",
+        Title = "뒤로 돌아",
         Callback = function()
             rotate_angle(180)
         end
     })
 
 	----------------------------------------------
+	local Detect = Tabs.Settings:AddSlider("Detect", {
+        Title = "Detect Delay",
+        Description = "감지 딜레이를 결정해요.",
+        Default = 0.5,
+        Min = 0,
+        Max = 2,
+        Rounding = 1
+    })
+
+    Detect:OnChanged(function(Value)
+        detect_delay = Value
+    end)
+
+	Detect:SetValue(0.5)
 
 	local Speed = Tabs.Settings:AddSlider("Speed", {
         Title = "Rotation Speed",
@@ -402,6 +499,21 @@ do
     end)
 
 	Speed:SetValue(0.2)
+
+	local Spin = Tabs.Settings:AddSlider("Spin", {
+        Title = "Spin Speed",
+        Description = "스핀 속도를 결정해요.\ne.g. 호스트 주시",
+        Default = 5,
+        Min = 0,
+        Max = 10,
+        Rounding = 0.1
+    })
+
+    Spin:OnChanged(function(Value)
+        spin_speed = Value
+    end)
+
+	Spin:SetValue(5)
 
 	local Streaming = Tabs.Settings:AddToggle("Streaming", {
 		Title = "Streaming",
@@ -419,6 +531,8 @@ Window:SelectTab(1)
 local function handle_chat(player, message)
 	if not is_active then return end
 	if player.Name ~= player_name then return end
+	if pause then return end
+	
 	if message == "Face Test Start." then
 		is_testing = true
 		last_direction = nil
@@ -429,7 +543,7 @@ local function handle_chat(player, message)
 		return
 	end
 	if message == "Face Test End." then
-		if last_action ~= "Center face." or math.abs(angle) > 10 then
+		if last_action ~= "Center face." or math.abs(((angle + 180) % 360 - 180)) > 10 then
 			status_text = "Fake 🔴"
 			return
 		end
@@ -441,10 +555,24 @@ local function handle_chat(player, message)
 		return
 	end
 	if is_testing then
+		if string.find(message, "#") then
+			last_fake = true
+			status_text = "Fake 🔴"
+			return
+		end
+		if fakeChk_true and status_text == "Fake 🔴" and last_fake then
+			return
+		end
 		humanoid.AutoRotate = false
+		if fake_phrases[message] then
+			last_fake = false
+			status_text = "No Fake Ready..."
+			humanoid.AutoRotate = true
+			return
+		end
 		if direction_phrases[message] then
-			last_direction = message
 			if string.match(direction_phrases[message], "([^:]+)") == "ambiguous" then
+				last_direction = message
 				if ambiguous_count >= 2 then ambiguous_count = 0 end
 				ambiguous_count = ambiguous_count + 1
 				if tonumber(string.match(direction_phrases[message], ":(%d+)")) == 1 then
@@ -455,6 +583,7 @@ local function handle_chat(player, message)
 					rotate_angle(-45)
 				end
 			else
+				last_action = message
 				if tonumber(string.match(direction_phrases[message], ":(%d+)")) == 1 then
 					angle = angle + 90
 					rotate_angle(90)
@@ -468,31 +597,13 @@ local function handle_chat(player, message)
 			return 
 		end
 		if face_phrases[message] then
-			if ambiguous_count >= 2 then
-				status_text = "No fake 🟢"
-				if face_phrases[message] == 1 then
-					if last_action == "Control face." then
-						handle_behavior(false)
-					end
-					rotate_facing("front")
-				else
-					rotate_facing("back")
+			status_text = "No fake 🟢"
+			if face_phrases[message] == 1 then
+				if last_action == "Control face." then
+					handle_behavior(false)
 				end
-			else
-				if last_direction and string.match(direction_phrases[last_direction], "([^:]+)") == "ambiguous" then
-					status_text = "Fake 🔴"
-				else
-					status_text = "No fake 🟢"
-					if face_phrases[message] == 1 then
-						if last_action == "Control face." then
-							handle_behavior(false)
-						end
-						rotate_facing("front")
-					else
-						rotate_facing("back")
-					end
-				end
-			end
+				rotate_facing("front")
+			end			
 			last_action = message
 			humanoid.AutoRotate = true
 			return
@@ -508,6 +619,7 @@ local function handle_chat(player, message)
 			if last_action == "Center face." or angle == initial_yaw then
 				status_text = "No fake 🟢"
 				last_action = message
+				task.wait(detect_delay)
 				handle_behavior(true)
 			else
 				status_text = "Fake 🔴"
@@ -555,7 +667,7 @@ task.spawn(function ()
 			angle = get_character_yaw()
 		end
 		if angle >= 360 then
-			angle = 0
+			angle = angle - 360
 		end
 	end
 end)
@@ -563,11 +675,13 @@ do
 	abc = RunService.Heartbeat:Connect(function()
 		if Fluent.Unloaded then
 			vran = false
+			streaming = false
 			for _, plr in ipairs(Players:GetPlayers()) do
 				cleanup_connection(plr)
 			end
 			warn = oldwarn
 			print = oldprint
+			getgenv().eris_running = false
 			abc:Disconnect()
 			return
 		end
